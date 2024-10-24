@@ -1,6 +1,5 @@
 <?php
-
-$file = __DIR__ . "/微信对账-XXX.csv";
+$file = __DIR__ . "/微信对账-IN.csv";
 
 $content = file_get_contents($file);
 
@@ -14,10 +13,12 @@ foreach ($lines as $line) {
         continue;
     }
     if (is_numeric($line[0])) {
+
+        START:
 //        var_dump($line);
         $segList = explode(",", $line);
         if ($segList[6] === "¥3.00") {
-           $line = "2024-08-04 09:08:00,商户消费,上海新上铁实业发展集团有限公司,自贩机消费:怡宝饮用纯净水555ml,支出,¥3.00,XXX银行信用卡,支付成功,4.22222+027,,222222,,/";
+           $line = "2024-08-04 09:08:00,商户消费,上海新上铁实业发展集团有限公司,自贩机消费:怡宝饮用纯净水555ml,支出,¥3.00,浙江xxx银行信用卡(0001),支付成功,0000,,/";
             $segList = explode(",", $line);
         }
 
@@ -31,6 +32,20 @@ foreach ($lines as $line) {
         $moneyVal = floatval($moneyVal);
         if ($type === "支出") {
             $moneyVal = -1 * $moneyVal;
+        } else if ($type !== "收入") {
+            if ($type === "/") {
+                continue;
+            }
+
+            // 使用正则表达式匹配引号中的内容并进行处理
+            $line = preg_replace_callback('/"([^"]*)"/', function ($matches) {
+                $originalString = $matches[1];
+                $replacedString = str_replace(array(',', '"'), '', $originalString);
+                return '"'. $replacedString. '"';
+            }, $line);
+
+            var_dump($type, $line, $moneyVal);
+            goto START;
         }
         $moneyReceiver = $segList[2];
         if ($moneyReceiver === "/") {
